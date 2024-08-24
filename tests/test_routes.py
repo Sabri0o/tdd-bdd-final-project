@@ -30,7 +30,7 @@ from decimal import Decimal
 from unittest import TestCase
 from service import app
 from service.common import status
-from service.models import db, init_db, Product
+from service.models import db, init_db, Product, Category
 from tests.factories import ProductFactory
 
 # Disable all but critical errors during normal test run
@@ -191,3 +191,91 @@ class TestProductRoutes(TestCase):
         """It should return a not found response"""
         response = self.client.get(f"{BASE_URL}/0")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_update_product(self):
+        """It should update a product"""
+        test_product = ProductFactory()
+        create_product_res = self.client.post(BASE_URL, json=test_product.serialize())
+        self.assertEqual(create_product_res.status_code, status.HTTP_201_CREATED)
+        created_product = create_product_res.get_json()
+        get_product_res = self.client.get(f"{BASE_URL}/{created_product['id']}")
+        product_to_update = get_product_res.get_json()
+        product_to_update["description"] = "updated desc"
+        update_product_res = self.client.put(f"{BASE_URL}/{product_to_update['id']}", json=product_to_update)
+        self.assertEqual(update_product_res.status_code, status.HTTP_200_OK)
+        updated_product = update_product_res.get_json()
+        self.assertEqual(updated_product["description"], "updated desc")
+
+    def test_update_not_found_product(self):
+        """It should return a not found response"""
+        test_product = ProductFactory()
+        create_product_res = self.client.post(BASE_URL, json=test_product.serialize())
+        self.assertEqual(create_product_res.status_code, status.HTTP_201_CREATED)
+        created_product = create_product_res.get_json()
+        get_product_res = self.client.get(f"{BASE_URL}/{created_product['id']}")
+        product_to_update = get_product_res.get_json()
+        product_to_update["description"] = "updated desc"
+        update_product_res = self.client.put(f"{BASE_URL}/0", json=product_to_update)
+        self.assertEqual(update_product_res.status_code, status.HTTP_404_NOT_FOUND)
+       
+    def test_delete_product(self):
+        """It should delete a product"""
+        test_product = ProductFactory()
+        create_product_res = self.client.post(BASE_URL, json=test_product.serialize())
+        self.assertEqual(create_product_res.status_code, status.HTTP_201_CREATED)
+        created_product = create_product_res.get_json()
+        get_product_res = self.client.get(f"{BASE_URL}/{created_product['id']}")
+        self.assertEqual(get_product_res.status_code, status.HTTP_200_OK)
+        product_to_delete = get_product_res.get_json()
+        delete_product_res = self.client.delete(f"{BASE_URL}/{product_to_delete['id']}")
+        self.assertEqual(delete_product_res.status_code, status.HTTP_204_NO_CONTENT)
+        get_product_res = self.client.get(f"{BASE_URL}/{created_product['id']}")
+        self.assertEqual(get_product_res.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_get_product_list(self):
+        """It should Get a list of Products"""
+        self._create_products(5)
+        response = self.client.get(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 5)
+
+    def test_get_product_by_name(self):
+        """It should get Products by name"""
+        test_product = ProductFactory()
+        query_name = "xxx"
+        test_product.name = query_name
+        create_product_res = self.client.post(BASE_URL, json=test_product.serialize())
+        self.assertEqual(create_product_res.status_code, status.HTTP_201_CREATED)
+        created_product = create_product_res.get_json()
+        response = self.client.get(BASE_URL, query_string=f"name={query_name}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]['name'], query_name)
+
+    def test_get_product_by_category(self):
+        """It should get Products by category"""
+        test_product = ProductFactory()
+        query_category = test_product.category
+        create_product_res = self.client.post(BASE_URL, json=test_product.serialize())
+        self.assertEqual(create_product_res.status_code, status.HTTP_201_CREATED)
+        created_product = create_product_res.get_json()
+        response = self.client.get(BASE_URL, query_string=f"category={query_category.name}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]['category'], query_category.name)
+
+    def test_get_product_availability(self):
+        """It should get Products by availability"""
+        test_product = ProductFactory()
+        query_availability = test_product.available
+        create_product_res = self.client.post(BASE_URL, json=test_product.serialize())
+        self.assertEqual(create_product_res.status_code, status.HTTP_201_CREATED)
+        created_product = create_product_res.get_json()
+        response = self.client.get(BASE_URL, query_string=f"availability={query_availability}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]['available'], query_availability)
