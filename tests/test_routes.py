@@ -30,7 +30,7 @@ from decimal import Decimal
 from unittest import TestCase
 from service import app
 from service.common import status
-from service.models import db, init_db, Product, Category
+from service.models import db, init_db, Product
 from tests.factories import ProductFactory
 
 # Disable all but critical errors during normal test run
@@ -217,20 +217,6 @@ class TestProductRoutes(TestCase):
         product_to_update["description"] = "updated desc"
         update_product_res = self.client.put(f"{BASE_URL}/0", json=product_to_update)
         self.assertEqual(update_product_res.status_code, status.HTTP_404_NOT_FOUND)
-       
-    def test_delete_product(self):
-        """It should delete a product"""
-        test_product = ProductFactory()
-        create_product_res = self.client.post(BASE_URL, json=test_product.serialize())
-        self.assertEqual(create_product_res.status_code, status.HTTP_201_CREATED)
-        created_product = create_product_res.get_json()
-        get_product_res = self.client.get(f"{BASE_URL}/{created_product['id']}")
-        self.assertEqual(get_product_res.status_code, status.HTTP_200_OK)
-        product_to_delete = get_product_res.get_json()
-        delete_product_res = self.client.delete(f"{BASE_URL}/{product_to_delete['id']}")
-        self.assertEqual(delete_product_res.status_code, status.HTTP_204_NO_CONTENT)
-        get_product_res = self.client.get(f"{BASE_URL}/{created_product['id']}")
-        self.assertEqual(get_product_res.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_get_product_list(self):
         """It should Get a list of Products"""
@@ -247,7 +233,7 @@ class TestProductRoutes(TestCase):
         test_product.name = query_name
         create_product_res = self.client.post(BASE_URL, json=test_product.serialize())
         self.assertEqual(create_product_res.status_code, status.HTTP_201_CREATED)
-        created_product = create_product_res.get_json()
+        create_product_res.get_json()
         response = self.client.get(BASE_URL, query_string=f"name={query_name}")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
@@ -260,7 +246,7 @@ class TestProductRoutes(TestCase):
         query_category = test_product.category
         create_product_res = self.client.post(BASE_URL, json=test_product.serialize())
         self.assertEqual(create_product_res.status_code, status.HTTP_201_CREATED)
-        created_product = create_product_res.get_json()
+        create_product_res.get_json()
         response = self.client.get(BASE_URL, query_string=f"category={query_category.name}")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
@@ -273,9 +259,23 @@ class TestProductRoutes(TestCase):
         query_availability = test_product.available
         create_product_res = self.client.post(BASE_URL, json=test_product.serialize())
         self.assertEqual(create_product_res.status_code, status.HTTP_201_CREATED)
-        created_product = create_product_res.get_json()
+        create_product_res.get_json()
         response = self.client.get(BASE_URL, query_string=f"availability={query_availability}")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]['available'], query_availability)
+
+    def test_delete_product(self):
+        """It should delete a product"""
+        test_product = ProductFactory()
+        create_product_res = self.client.post(BASE_URL, json=test_product.serialize())
+        self.assertEqual(create_product_res.status_code, status.HTTP_201_CREATED)
+        created_product = create_product_res.get_json()
+        get_product_res = self.client.get(f"{BASE_URL}/{created_product['id']}")
+        self.assertEqual(get_product_res.status_code, status.HTTP_200_OK)
+        product_to_delete = get_product_res.get_json()
+        delete_product_res = self.client.delete(f"{BASE_URL}/{product_to_delete['id']}")
+        self.assertEqual(delete_product_res.status_code, status.HTTP_204_NO_CONTENT)
+        get_product_res = self.client.get(f"{BASE_URL}/{created_product['id']}")
+        self.assertEqual(get_product_res.status_code, status.HTTP_404_NOT_FOUND)
