@@ -210,3 +210,13 @@ class TestProductModel(unittest.TestCase):
         self.assertEqual(found.count(), count)
         for product in found:
             self.assertEqual(product.category, category)
+
+    def test_find_a_product_by_price(self):
+        """It should Find a product by price"""
+        products = Product.all()
+        self.assertEqual(products, [])
+        product = Product(name="Fedora", description="A red hat", price=12.50, available=True, category=Category.CLOTHS)
+        product.create()
+        found = Product.find_by_price("12.50")
+        self.assertEqual(found.count(), 1)
+        self.assertEqual(found[0].price, 12.50)
