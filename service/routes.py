@@ -142,15 +142,17 @@ def list_products():
 #
 # PLACE YOUR CODE HERE TO READ A PRODUCT
 #
+
+
 @app.route("/products/<product_id>", methods=["GET"])
 def get_products(product_id):
+
     """
     Get a Product
     This endpoint will read a Product based ON the id passed in params
     """
     app.logger.info("Request to Retrieve a product with id [%s]", product_id)
     found_product = Product.find(product_id)
-    
     if not found_product:
         abort(status.HTTP_404_NOT_FOUND, f"Product with id '{product_id}' was not found.")
 
@@ -164,8 +166,11 @@ def get_products(product_id):
 #
 # PLACE YOUR CODE TO UPDATE A PRODUCT HERE
 #
+
+
 @app.route("/products/<product_id>", methods=["PUT"])
 def update_product(product_id):
+
     """
     Update a Product
     This endpoint will update a Product based ON the id passed in params
@@ -175,11 +180,9 @@ def update_product(product_id):
     data = request.get_json()
     product = Product()
     found_product = Product.find(product_id)
-    
     if not found_product:
         abort(status.HTTP_404_NOT_FOUND, f"Product with id '{product_id}' was not found.")
 
- 
     product.deserialize(data)
     product.id = product_id
     product.update()
@@ -203,9 +206,7 @@ def delete_product(product_id):
     This endpoint will delete a Product based ON the id passed in params
     """
     app.logger.info("Request to delete a product with id [%s]", product_id)
-    product = Product()
     found_product = Product.find(product_id)
-    
     if found_product:
         found_product.delete()
 
